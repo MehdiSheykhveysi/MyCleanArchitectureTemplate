@@ -14,7 +14,7 @@ namespace App.Infrastructure.AutomapperConfigurationAndMapping
         {
             _mapperConfiguration = new MapperConfiguration(c =>
             {
-                c.GetConfiguration(this.GetType().Assembly);
+                c.ApplyConfiguration(this.GetType().Assembly);
             });
             _mapperConfiguration.CompileMappings();
         }

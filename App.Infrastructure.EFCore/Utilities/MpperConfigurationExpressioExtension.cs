@@ -8,12 +8,12 @@ namespace App.Infrastructure.Utilities
 {
     public static class MpperConfigurationExpressioExtension
     {
-        public static void GetConfiguration(this IMapperConfigurationExpression configuration)
+        public static void ApplyConfiguration(this IMapperConfigurationExpression configuration)
         {
-            configuration.GetConfiguration(Assembly.GetEntryAssembly());
+            configuration.ApplyConfiguration(Assembly.GetEntryAssembly());
         }
 
-        public static void GetConfiguration(this IMapperConfigurationExpression configuration, params Assembly[] assemblies)
+        public static void ApplyConfiguration(this IMapperConfigurationExpression configuration, params Assembly[] assemblies)
         {
             foreach (var assembly in assemblies)
             {
