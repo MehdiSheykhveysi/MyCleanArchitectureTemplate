@@ -3,8 +3,13 @@ using MediatR;
 
 namespace App.ApplicationService.ToDoItems.UseCases.Commands.CreateNewItem
 {
-    public class CreateToDoItemCommand:IRequest<CreateIItemDto>
+    public class CreateToDoItemCommand : IRequest<CreateIItemDto>
     {
         public string Description { get; set; }
+
+        public CreateToDoItemCommand(string description)
+        {
+            this.Description = description;
+        }
     }
 }

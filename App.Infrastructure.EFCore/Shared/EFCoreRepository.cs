@@ -1,5 +1,7 @@
 ﻿using App.ApplicationService.Shaared.Attributes;
 using App.Domain.Shared;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -39,9 +41,10 @@ namespace App.Infrastructure.Shared
         {
             return await entities.Where(predicate)
                                         .OrderBy(orderBySelector)
-                                        .Skip(pageSize)
+                                        .Skip((currentIndex - 1) * takeItem)
                                         .Take(takeItem)
                                         .Select(selector)
+                                        .AsNoTracking()
                                 .ToListAsync(cancellationToken)
                                 .ConfigureAwait(false);
         }
@@ -60,7 +63,7 @@ namespace App.Infrastructure.Shared
                 await InsertAsync(entity, cancellationToken);
         }
 
-        public async Task LoadCollectionAsync<TProperty>(TEntity entity, System.Linq.Expressions.Expression<Func<TEntity, IEnumerable<TProperty>>> propertyExpression, CancellationToken cancellationToken) where TProperty : class
+        public async Task LoadCollectionAsync<TProperty>(TEntity entity, Expression<Func<TEntity, IEnumerable<TProperty>>> propertyExpression, CancellationToken cancellationToken) where TProperty : class
         {
             this.Attach(entity);
             var collection = _dbContext.Entry(entity).Collection(propertyExpression);
@@ -68,7 +71,7 @@ namespace App.Infrastructure.Shared
                 await collection.LoadAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task LoadRefrenceAsync<TProperty>(TEntity entity, System.Linq.Expressions.Expression<Func<TEntity, TProperty>> propertyExpression, CancellationToken cancellationToken) where TProperty : class
+        public async Task LoadRefrenceAsync<TProperty>(TEntity entity, Expression<Func<TEntity, TProperty>> propertyExpression, CancellationToken cancellationToken) where TProperty : class
         {
             this.Attach(entity);
             var refrence = _dbContext.Entry(entity).Reference(propertyExpression);
@@ -111,7 +114,7 @@ namespace App.Infrastructure.Shared
 
         public async Task<IEnumerable<ProjectionType>> GetAllAsync<ProjectionType>(Expression<Func<TEntity, ProjectionType>> selector, CancellationToken cancellationToken)
         {
-            return await entities.Select(selector).ToListAsync(cancellationToken);
+            return await entities.AsNoTracking().Select(selector).ToListAsync(cancellationToken);
         }
     }
 }

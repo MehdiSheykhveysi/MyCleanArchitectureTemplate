@@ -1,4 +1,5 @@
-﻿using App.Api.Utilities;
+﻿using App.Api.Middlewars;
+using App.Api.Utilities;
 using App.ApplicationService.Shaared;
 using App.ApplicationService.ToDoItems.UseCases.Queries;
 using App.Infrastructure.Shared;
@@ -22,7 +23,6 @@ namespace App.Api
 
         public IConfiguration Configuration { get; }
         private readonly SiteSettingsService settingsService;
-        //public delegate IRepository<TEntity, TKey> ServiceResolver<TEntity, TKey>(string key) where TKey : IEquatable<TKey> where TEntity : Entity<TKey>;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -34,26 +34,35 @@ namespace App.Api
                 //Disable Client Site Evaluation 
                 options.ConfigureWarnings(warnings => warnings.Throw(RelationalEventId.QueryClientEvaluationWarning));
             });
+
+            //Add Essential mvc service and Register FulenValidaation inside this
             services.AddControllers();
-            services.AddScopedDependencies(typeof(AppDbContext).Assembly);
-            //services.AddScoped(typeof(EFCoreRepository<,>));
-            //services.AddScoped<IRepository<,>> (Provider => new RepositoryCasheProxy<,>(Provider.GetService < EFCoreRepository <,> ()));
-            // services.AddScoped(typeof(IRepository<,>), typeof(RepositoryCasheProxy<,>));
 
-            services.AddMediatR(cfg => cfg.AsScoped(), typeof(ToDoItemQueryHandler).Assembly);
+            services.AddMemoryCache();
+
+            services.AddScopedDependencies(typeof(AppDbContext).Assembly, typeof(SiteSettingsService).Assembly);
+
+            services.AddMediatR(cfg => cfg.AsScoped(), typeof(ToDoItemPagedQueryHandler).Assembly);
+
+            //services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+            //services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
         }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 
     }
 
     public partial class Startup
     {
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseErrorHandlingMiddleware();
             }
 
             app.UseMvc();

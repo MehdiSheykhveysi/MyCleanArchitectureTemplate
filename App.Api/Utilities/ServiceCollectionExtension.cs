@@ -1,4 +1,6 @@
 ﻿using App.ApplicationService.Shaared.Attributes;
+using FluentValidation.AspNetCore;
+using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +18,7 @@ namespace App.Api.Utilities
             new ServiceCollectionDecorator(services).AddIdentityService<TUser, TKey, TContext>();
         }
 
-        public static void AddScopedDependencies(this IServiceCollection services, Assembly targetAssembly)
+        public static void AddScopedDependencies(this IServiceCollection services, params Assembly[] targetAssembly)
         {
             new ServiceCollectionDecorator(services).AddScopedDependencies(targetAssembly);
         }
@@ -43,20 +45,27 @@ namespace App.Api.Utilities
             }).AddEntityFrameworkStores<TContext>();
         }
 
-        public void AddScopedDependencies(Assembly targetAssembly)
+        public void AddScopedDependencies(params Assembly[] targetAssembly)
         {
             _services.Scan(scan => scan
               .FromAssemblies(targetAssembly)
                 .AddClasses(classes => classes.WithAttribute(typeof(ServiceMark)))
                     .UsingRegistrationStrategy(RegistrationStrategy.Skip)
                         .AsImplementedInterfaces()
-                        .AsSelf()
                             .WithScopedLifetime());
+
+            _services.Scan(scan => scan
+                      .FromAssemblies(targetAssembly)
+                        .AddClasses(classes => classes.AssignableTo(typeof(IPipelineBehavior<,>)))
+                            .AsImplementedInterfaces()
+                            .WithScopedLifetime()
+
+            );
         }
 
         public void AddControlLers()
         {
-            _services.AddMvcCore().AddJsonFormatters().AddApiExplorer().AddFormatterMappings().AddDataAnnotations().AddJsonFormatters().SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddCookieTempDataProvider();
+            _services.AddMvcCore().AddJsonFormatters().AddApiExplorer().AddFormatterMappings().AddDataAnnotations().AddJsonFormatters().SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddCookieTempDataProvider().AddFluentValidation(cfg => cfg.RegisterValidatorsFromAssemblyContaining<ServiceMark>());
         }
     }
 }

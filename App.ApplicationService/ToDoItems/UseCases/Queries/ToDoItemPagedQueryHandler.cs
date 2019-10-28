@@ -8,16 +8,16 @@ using System.Threading.Tasks;
 
 namespace App.ApplicationService.ToDoItems.UseCases.Queries
 {
-    public class ToDoItemQueryHandler : IRequestHandler<ToDoItemQuery, PaginatedList<ToDoItemQueryDto>>
+    public class ToDoItemPagedQueryHandler : IRequestHandler<ToDoItemPagedQuery, PaginatedList<ToDoItemQueryDto>>
     {
         private readonly IRepository<ToDoItem, int> _repository;
 
-        public ToDoItemQueryHandler(IRepository<ToDoItem, int> repository)
+        public ToDoItemPagedQueryHandler(IRepository<ToDoItem, int> repository)
         {
             _repository = repository;
         }
 
-        public async Task<PaginatedList<ToDoItemQueryDto>> Handle(ToDoItemQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedList<ToDoItemQueryDto>> Handle(ToDoItemPagedQuery request, CancellationToken cancellationToken)
         {
             IEnumerable<ToDoItemQueryDto> items = await _repository.GetPagedAsync(request._allItemSpecification.ToExpression(), request._projectionSpecification.ToExpression(), request._orderByIdSpecification.ToExpression(), request.PageSize, request.TakeItem, request.CurrentIndex, cancellationToken);
 

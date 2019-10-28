@@ -9,6 +9,5 @@ namespace App.Domain.Shared
 
     public abstract class IntEntity : Entity<int>
     {
-
     }
 }
