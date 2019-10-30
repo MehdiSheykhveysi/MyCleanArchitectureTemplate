@@ -35,6 +35,13 @@ namespace App.Api.Controllers
             return Ok(result);
         }
 
+        [Route("/Home/Post")]
+        [HttpPost]
+        public OkResult Post(string firstName)
+        {
+            return Ok();
+        }
+
         // GET api/values/5
         [HttpGet("{id:int}")]
         public async Task<OkObjectResult> Get([FromRoute]int id, CancellationToken cancellationToken)

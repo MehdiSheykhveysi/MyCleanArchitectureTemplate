@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace App.Infrastructure.Proxies
 {
     [ServiceMark]
-    public class RepositoryCasheProxy<TEntity, Tkey> : IRepositoryCasheProxy<TEntity, Tkey> where TEntity : Entity<Tkey> where Tkey : IEquatable<Tkey>
+    public class RepositoryCasheProxy<TEntity, Tkey> : IRepositoryCacheProxy<TEntity, Tkey> where TEntity : Entity<Tkey> where Tkey : IEquatable<Tkey>
     {
 
         public RepositoryCasheProxy(IRepository<TEntity, Tkey> repository, ICacheAdapter cacheAdapter)
@@ -21,8 +21,9 @@ namespace App.Infrastructure.Proxies
 
         private readonly IRepository<TEntity, Tkey> _repository;
 
-        public ICacheAdapter CacheAdapter { get; set; }
+        private readonly string SingleObjectCacheKey = $"Entity-Cached ";
 
+        private readonly ICacheAdapter CacheAdapter;
 
         public Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken)
         {
@@ -31,7 +32,11 @@ namespace App.Infrastructure.Proxies
 
         public Task DeleteAsync(TEntity entity, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            string key = string.Concat(SingleObjectCacheKey, entity.Id);
+
+            CacheAdapter.Remove(key);
+
+            return _repository.DeleteAsync(entity, cancellationToken);
         }
 
         public Task<TEntity> FirstItemAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken)
@@ -46,12 +51,20 @@ namespace App.Infrastructure.Proxies
 
         public async Task InsertAsync(TEntity entity, CancellationToken cancellationToken)
         {
+            string key = string.Concat(SingleObjectCacheKey, entity.Id);
+
             await _repository.InsertAsync(entity, cancellationToken);
+
+            CacheAdapter.Add(key, entity);
         }
 
-        public Task InsertOrUpdateAsync(TEntity entity, CancellationToken cancellationToken)
+        public async Task InsertOrUpdateAsync(TEntity entity, CancellationToken cancellationToken)
         {
-            return _repository.InsertOrUpdateAsync(entity, cancellationToken);
+            string key = string.Concat(SingleObjectCacheKey, entity.Id);
+
+            await _repository.InsertOrUpdateAsync(entity, cancellationToken);
+
+            CacheAdapter.AddOrUpdate(key, entity);
         }
 
         public Task LoadCollectionAsync<TProperty>(TEntity entity, Expression<Func<TEntity, IEnumerable<TProperty>>> propertyExpression, CancellationToken cancellationToken) where TProperty : class
@@ -69,24 +82,27 @@ namespace App.Infrastructure.Proxies
             return _repository.SingleItemAsync(predicate, cancellationToken);
         }
 
-        public Task UpdateAsync(TEntity entity, CancellationToken cancellationToken)
+        public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken)
         {
-            return _repository.UpdateAsync(entity, cancellationToken);
+            string key = string.Concat(SingleObjectCacheKey, entity.Id);
+           
+            await _repository.UpdateAsync(entity, cancellationToken);
+
+            CacheAdapter.Update(key, entity);
         }
 
         public async Task<IEnumerable<ProjectionType>> GetAllAsync<ProjectionType>(Expression<Func<TEntity, ProjectionType>> selector, CancellationToken cancellationToken)
         {
             IEnumerable<ProjectionType> result = new List<ProjectionType>();
-            if (selector.GetRightConstant() is TEntity entity)
+
+            string CacheKey = $"CachedRepository-{typeof(TEntity).Name}";
+
+            if (CacheAdapter.Exist(CacheKey))
+                return CacheAdapter.Get<IEnumerable<ProjectionType>>(CacheKey);
+            else
             {
-                string key = $"Collection{entity.Id}";
-                if (CacheAdapter.Exist(key))
-                    return CacheAdapter.Get<IEnumerable<ProjectionType>>(key);
-                else
-                {
-                    result = await _repository.GetAllAsync(selector, cancellationToken);
-                    CacheAdapter.Add(key, result);
-                }
+                result = await _repository.GetAllAsync(selector, cancellationToken);
+                CacheAdapter.Add(CacheKey, result);
             }
             return result;
         }

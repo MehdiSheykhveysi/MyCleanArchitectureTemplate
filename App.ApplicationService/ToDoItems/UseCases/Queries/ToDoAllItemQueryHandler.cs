@@ -10,9 +10,9 @@ namespace App.ApplicationService.ToDoItems.UseCases.Queries
 {
     public class ToDoAllItemQueryHandler : IRequestHandler<ToDoAllItemQuery, IEnumerable<ToDoItemQueryDto>>
     {
-        private readonly IRepositoryCasheProxy<ToDoItem, int> _repository;
+        private readonly IRepositoryCacheProxy<ToDoItem, int> _repository;
 
-        public ToDoAllItemQueryHandler(IRepositoryCasheProxy<ToDoItem, int> repository)
+        public ToDoAllItemQueryHandler(IRepositoryCacheProxy<ToDoItem, int> repository)
         {
             _repository = repository;
         }

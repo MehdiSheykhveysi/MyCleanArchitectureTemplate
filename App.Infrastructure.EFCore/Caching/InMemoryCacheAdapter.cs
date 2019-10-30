@@ -1,11 +1,12 @@
 ﻿using App.ApplicationService.Shaared.Attributes;
 using App.Domain.Shared;
 using Microsoft.Extensions.Caching.Memory;
+using System;
 
 namespace App.Infrastructure.Caching
 {
     [ServiceMark]
-    public class InMemoryCacheAdapter : ICacheAdapter
+    public class InMemoryCacheAdapter : ICacheAdapter, IDisposable
     {
         private readonly IMemoryCache _memoryCache;
 
@@ -14,9 +15,19 @@ namespace App.Infrastructure.Caching
             _memoryCache = memoryCache;
         }
 
-        public void Add<T>(string key, T value)
+        ~InMemoryCacheAdapter()
+        {
+            Dispose();
+        }
+
+        public void Add<TValue>(string key, TValue value)
         {
             _memoryCache.Set(key, value);
+        }
+
+        public void Dispose()
+        {
+            _memoryCache.Dispose();
         }
 
         public bool Exist(string key)
@@ -24,14 +35,35 @@ namespace App.Infrastructure.Caching
             return _memoryCache.TryGetValue(key, out object temp);
         }
 
-        public T Get<T>(string key)
+        public TValue Get<TValue>(string key)
         {
-            return _memoryCache.Get<T>(key);
+            return _memoryCache.Get<TValue>(key);
         }
 
         public void Remove(string key)
         {
             _memoryCache.Remove(key);
+        }
+
+        public void Update<TValue>(string key, TValue value)
+        {
+            if (Exist(key))
+            {
+                Remove(key);
+                Add(key, value);
+            }
+        }
+
+        public void AddOrUpdate<TValue>(string key, TValue value)
+        {
+            if (Exist(key))
+            {
+                Update(key, value);
+            }
+            else
+            {
+                Add(key, value);
+            }
         }
     }
 }
