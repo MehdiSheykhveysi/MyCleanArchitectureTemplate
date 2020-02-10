@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using App.ApplicationService.ToDoItems.Dtos;
 using App.ApplicationService.ToDoItems.Specifications;
@@ -46,7 +43,8 @@ namespace App.Api.Controllers
         [HttpGet("{id:int}")]
         public async Task<OkObjectResult> Get([FromRoute]int id, CancellationToken cancellationToken)
         {
-            ToDoItemQueryDto result = await _mediator.Send(new ToDoItemGetByIdQuery(new ToDoItemGetByIdSpecification(id)), cancellationToken);
+            CreateIItemDto result = await _mediator.Send(new CreateToDoItemCommand(null), cancellationToken);
+           // ToDoItemQueryDto result = await _mediator.Send(new ToDoItemGetByIdQuery(new ToDoItemGetByIdSpecification(id)), cancellationToken);
             return Ok(result);
         }
 
